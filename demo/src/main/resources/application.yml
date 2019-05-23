@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: rabbitmq-hello
+  rabbitmq:
+    host: 192.168.1.88
+    port: 5672
+    username: root
+    password: 123456
+server:
+  port: 8877
+eureka:
+  client:
+    serviceUrl:
+      defaultZone:  http://peer1:1111/eureka/
