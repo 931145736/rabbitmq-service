@@ -1,0 +1,141 @@
+group 'com.qingshuo'
+version = '1.0.0'
+
+buildscript {
+    ext {
+        springBootVersion = '2.0.7.RELEASE'
+    }
+    repositories {
+        maven { url "http://maven.aliyun.com/nexus/contentclient/groups/public/" }
+        maven { url "https://repo.spring.io/milestone" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "http://114.67.225.196:8781/repository/qingshuo_dev/"}
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("se.transmode.gradle:gradle-docker:1.2")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'application'
+apply plugin: 'docker'
+
+sourceCompatibility = '1.8'
+mainClassName = "com.qingshuo.growthservice.GrowthServiceApplication"
+repositories {
+    mavenCentral()
+}
+
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+
+    idea {
+        module {
+            inheritOutputDirs = true
+        }
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'docker'
+    apply plugin: 'jacoco'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = ['src/main/java']
+            }
+        }
+        test {
+            java {
+                srcDirs = ['src/test/java']
+            }
+        }
+    }
+
+    ext {
+        springBootAdminVersion = '2.1.2'
+        springCloudVersion = 'Finchley.SR2'
+        springFrameworkVersion = '5.1.4.RELEASE'
+
+        nacosVersion = '0.9.0.RELEASE'
+        scalaVersion = '2.11.12'
+        lombokVersion = '1.18.6'
+        jacksonVersion = '2.9.8'
+        swaggerVersion = '2.9.2'
+        mysqlVersion = '8.0.13'
+        druidVersion = '1.1.16'
+        mybatisVersion = '3.4.6'
+        mybatisSpringVersion = '1.3.2'
+        generatorVersion = '1.3.7'
+        pagehelperVersion = '1.2.10'
+
+    }
+
+    repositories {
+        maven { url "http://maven.aliyun.com/nexus/contentclient/groups/public/" }
+        maven { url "https://repo.spring.io/milestone" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "http://114.67.225.196:8781/repository/qingshuo_dev/"}
+        mavenCentral()
+        jcenter()
+
+    }
+
+    configurations {
+
+        mybatisGenerator    // 添加 mybatis-generator 插件
+
+        // 排除 tomcat 依赖（使用 undertow）
+        implementation.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+
+    dependencies {
+
+        compileOnly "org.projectlombok:lombok:${lombokVersion}"
+        annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+        compile('com.qingshuo.commom:qs-common:1.0.0-RELEASE')
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "de.codecentric:spring-boot-admin-dependencies:${springBootAdminVersion}"
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+
+    // 添加docker插件task
+    task buildDocker(type: Docker, dependsOn: build) {
+        //applicationName = applicationName
+        tagVersion = version
+        dockerfile = file('src/main/docker/Dockerfile')
+        doFirst {
+            copy {
+                from jar
+                into stageDir
+            }
+        }
+    }
+
+    tasks.check.dependsOn jacocoTestReport
+
+    // clean 命令时删除 out 目录
+    task cleanOutDir(type: Delete) {
+        delete "${projectDir}/out"
+        delete "${rootDir}/out"
+    }
+    tasks.clean.dependsOn(cleanOutDir)
+
+}
+

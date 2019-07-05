@@ -1,0 +1,3 @@
+rootProject.name = 'growth-service'
+include 'growth-server'
+
